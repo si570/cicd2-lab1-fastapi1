@@ -10,9 +10,9 @@ on:
 
     steps:
     - name: Check out repo
-    uses: actions/checkoutv4
+    uses: actions/checkout@v4
 
-    -name;Setup python
+    - name: Setup python
     uses: actions/setup-pythonv5
     with:
     python-version: "3.11"
