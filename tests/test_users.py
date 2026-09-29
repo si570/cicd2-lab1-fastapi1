@@ -34,25 +34,47 @@ def test_bad_student_return_422(client, bad_student_id):
     assert data["email"] == "subhan@atu.ie"
 
 
-    def test_get_user_returns_created_user(client):
-        client.post("/api/users", json=user_payload(uid=10, name="Ailce", email="ailce@atu.ie"))
-        responce = client.get("/api/users")
-        assert responce.status_code == 200
-        data = responce.json()
-        assert len(data) == 1
-        assert data[0]["user_id"] == 10
-        assert data[0]["name"] == "Ailce"
+def test_get_user_returns_created_user(client):
+    client.post("/api/users", json=user_payload(uid=10, name="Ailce", email="ailce@atu.ie"))
+    response = client.get("/api/users")
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["user_id"] == 10
+    assert data[0]["name"] == "Ailce"
 
-    def test_get_existing_user_200(client):
-        client.post("/api/users", json=user_payload(uid=11))
 
-        response=client.get("/api/users/11")
+def test_get_existing_user_200(client):
+    client.post("/api/users", json=user_payload(uid=11))
+    response = client.get("/api/users/11")
+    assert response.status_code == 200
+    assert response.json()["user_id"] == 11
 
-        assert response.status_code == 200
-        assert response.json()["user_id"] == 11
 
-        def test_get_missing_users_404(client):
-            response = client.get("/api/users/999")
+def test_get_missing_users_404(client):
+    response = client.get("/api/users/999")
+    assert response.status_code == 404
+    assert response.json()["detail"] == "User not found"
 
+
+def test_deleting_users_returns_404(client):
+    client.post("/api/users", json=user_payload(uid=20))
+    response = client.delete("/api/users/20")
+
+    assert response.status_code == 204
+    assert response.content == b''
+
+    def test_deleting_missing_users_returns_404(client):
+        response = client.delete("/api/users/999")
+
+        assert response.status_code == 404
+        assert response.json()["detail"] == "User not found"
+
+        def test_deleted_user_cannot_be_retrived(client):
+            client.post("/api/users", json=user_payload(uid=21))
+
+            client.delete("/api/users/21")
+            response = client.get("/api/users/21")
             assert response.status_code == 404
-            assert response.json()["detail"] == "User not found"
+
+
