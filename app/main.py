@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Response, status
 
-from app.schema import UserCreate
+from app.schemas import UserCreate
 
 
 app = FastAPI(title="Lab 1 - FastAPI User API")
