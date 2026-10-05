@@ -29,13 +29,11 @@ def add_user(new_user: UserCreate, db: Session = Depends(get_db)):
  try:
  db.commit()
  db.refresh(db_user)
-
  except IntegrityError:
  db.rollback()
-
  raise HTTPException(
  status_code=status.HTTP_409_CONFLICT,
  detail="A user with this email or student_id already exists",
  )
- 
+
  return db_user
