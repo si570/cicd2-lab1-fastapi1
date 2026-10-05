@@ -6,8 +6,7 @@ from app.database import engine, get_db
 from app.models import Base, UserDB
 from app.schemas import UserCreate, UserRead
 
-# For this lab, create the tables when the module loads.
-# We will improve application startup structure later.
+
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Lab 3 - FastAPI SQLAlchemy User API")
