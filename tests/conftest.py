@@ -1,10 +1,16 @@
 import pytest
+from sqlalchemy import delete
 from fastapi.testclient import TestClient
-from app.main import app, users
+
+from app.database import SessionLocal
+from app.main import app
+from app.models import UserDB
 
 @pytest.fixture(autouse=True)
 def clear_users():
-    users.clear()
+    with SessionLocal() as db:
+        db.execute(delete(UserDB))
+        db.commit()
 
 @pytest.fixture
 def client():
