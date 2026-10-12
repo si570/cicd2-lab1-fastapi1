@@ -29,3 +29,10 @@ def override_get_db():
  finally:
     db.close()
 app.dependency_overrides[get_db] = override_get_db
+
+
+@pytest.fixture(autouse=True)
+def reset_database():
+ Base.metadata.create_all(bind=test_engine)
+ yield
+ Base.metadata.drop_all(bind=test_engine)
