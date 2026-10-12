@@ -21,3 +21,11 @@ TestingSessionLocal = sessionmaker(
  autoflush=False,
  expire_on_commit=False,
 )
+
+def override_get_db():
+ db = TestingSessionLocal()
+ try:
+    yield db
+ finally:
+    db.close()
+app.dependency_overrides[get_db] = override_get_db
