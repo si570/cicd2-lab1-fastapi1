@@ -94,3 +94,28 @@ def test_deleted_user_cannot_be_retrived(client):
     assert response.status_code == 404
 
 
+def test_get_users(client):
+    client.post("/api/users", json=user_payload())
+    response = client.get("/api/users")
+    assert response.status_code == 200
+    assert len(response.json()) == 1
+    assert response.json()[0]["student_id"] == "S1234567"
+
+
+def test_get_user_by_id(client):
+    created = client.post(
+        "/api/users",
+        json=user_payload(),
+    ).json()
+    user_id = created["user_id"]
+    response = client.get(f"/api/users/{user_id}")
+    assert response.status_code == 200
+    assert response.json()["email"] == "subhan@atu.ie"
+
+
+def test_get_missing_user_returns_404(client):
+    response = client.get("/api/users/999")
+    assert response.status_code == 404
+    assert "not found" in response.json()["detail"].lower()
+
+
