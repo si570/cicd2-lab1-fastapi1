@@ -1,17 +1,23 @@
 import pytest
-from sqlalchemy import delete
 from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
-from app.database import SessionLocal
+from app.database import get_db
 from app.main import app
-from app.models import UserDB
+from app.models import Base
 
-@pytest.fixture(autouse=True)
-def clear_users():
-    with SessionLocal() as db:
-        db.execute(delete(UserDB))
-        db.commit()
+TEST_DATABASE_URL = "sqlite+pysqlite://"
 
-@pytest.fixture
-def client():
-    return TestClient(app)
+test_engine = create_engine(
+ TEST_DATABASE_URL,
+ connect_args={"check_same_thread": False},
+ poolclass=StaticPool,
+)
+
+TestingSessionLocal = sessionmaker(
+ bind=test_engine,
+ autoflush=False,
+ expire_on_commit=False,
+)
