@@ -1,6 +1,12 @@
-from fastapi import Depends, FastAPI, HTTPException, status
+import json
+import os
+
 import httpx
+import aio_pika
+from dotenv import load_dotenv
+from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.responses import Response
+from pydantic import BaseModel
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -10,11 +16,52 @@ from app.models import Base, UserDB
 from app.schemas import UserCreate, UserRead
 from app.product_client import get_product_fetcher
 
-
+load_dotenv()
+RABBITMQ_URL = (
+    os.getenv("RABBITMQ_URL")
+    or os.getenv("RABBIT_URL")
+    or "amqp://labuser:labpass@localhost:5672/%2F"
+)
+ORDER_QUEUE = "orders"
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Lab 3 - FastAPI SQLAlchemy User API")
+
+
+class OrderRequest(BaseModel):
+    order_id: int
+    product: str
+    quantity: int
+
+
+async def publish_order(order: OrderRequest) -> None:
+    connection = await aio_pika.connect_robust(RABBITMQ_URL)
+    async with connection:
+        channel = await connection.channel(publisher_confirms=True)
+        await channel.declare_queue(ORDER_QUEUE, durable=True)
+        message = aio_pika.Message(
+            body=json.dumps(order.model_dump()).encode("utf-8"),
+            content_type="application/json",
+            delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
+        )
+        await channel.default_exchange.publish(
+            message,
+            routing_key=ORDER_QUEUE,
+            mandatory=True,
+        )
+
+
+@app.post("/orders", status_code=status.HTTP_200_OK)
+async def submit_order(order: OrderRequest):
+    try:
+        await publish_order(order)
+    except (aio_pika.exceptions.AMQPError, OSError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Order queue unavailable",
+        ) from exc
+    return {"status": "received", "order_id": order.order_id}
 
 @app.get("/health")
 def health():
