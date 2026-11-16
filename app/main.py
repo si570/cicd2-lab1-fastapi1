@@ -33,6 +33,7 @@ class OrderRequest(BaseModel):
     order_id: int
     product: str
     quantity: int
+    delivery_method: str
 
 
 async def publish_order(order: OrderRequest) -> None:

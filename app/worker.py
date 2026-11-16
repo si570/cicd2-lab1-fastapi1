@@ -18,7 +18,10 @@ class run:
     async def process_order(self, order):
         print(f"Received order {order['order_id']}")
         await asyncio.sleep(12)
-        print(f"Processed: {order['quantity']} x {order['product']}")
+        print(
+            f"Processed: {order['quantity']} x {order['product']} "
+            f"({order['delivery_method']})"
+        )
 
     async def run(self):
         connection = await aio_pika.connect_robust(RABBITMQ_URL)
