@@ -8,16 +8,40 @@ services:
     environment:
       DATABASE_URL: "sqlite:////data/app.db"
       PRODUCT_SERVICE_URL: "http://product-service:8001"
+      RABBITMQ_URL: "amqp://labuser:labpass@rabbitmq:5672/%2F"
     volumes:
       - user_data:/data
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
   product-service:
     build:
       context: .
       dockerfile: Dockerfile.product
     ports:
       - "8001:8001"
+
+  rabbitmq:
+    image: rabbitmq:4-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: labuser
+      RABBITMQ_DEFAULT_PASS: labpass
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
 volumes:
   user_data:
+  rabbitmq_data:
 
 
 
